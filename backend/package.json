@@ -1,0 +1,17 @@
+{
+  "name": "kantor",
+  "version": "1.0.0",
+  "description": "Mobile currency-exchange system enabling core wallet and conversion operations, integrated with a backend service and NBP API for real-time and historical exchange rates.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/index.js"
+  },
+  "author": "Emilia Marchacz",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mysql2": "^3.15.3"
+  }
+}
