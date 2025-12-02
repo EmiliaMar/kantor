@@ -1,8 +1,9 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import db from './config/db.js';
+import express from "express";
+import dotenv from "dotenv";
+import db from "./config/db.js";
 
-import authRoutes from './routes/auth.routes.js';
+import authRoutes from "./routes/auth.routes.js";
+import ratesRoutes from "./routes/rates.routes.js";
 
 dotenv.config();
 
@@ -11,53 +12,58 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.json({
+    message: "Kantor API Server",
+    status: "running",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth",
+      rates: "/api/rates",
+    },
+  });
+});
 
-app.get('/', (req, res) => {
+app.get("/api/health", async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT 1 + 1 AS result");
+
     res.json({
-        message: 'Kantor API Server',
-        status: 'running',
-        version: '1.0.0'
+      status: "OK",
+      database: "connected",
+      test_query_result: rows[0].result,
     });
+  } catch (error) {
+    res.status(500).json({
+      status: "ERROR",
+      database: "disconnected",
+      error: error.message,
+    });
+  }
 });
 
-app.get('/api/health', async (req, res) => {
-    try {
-        const [rows] = await db.query('SELECT 1 + 1 AS result');
-        
-        res.json({
-            status: 'OK',
-            database: 'connected',
-            test_query_result: rows[0].result,  
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: 'ERROR',
-            database: 'disconnected',
-            error: error.message
-        });
-    }
-});
+app.use("/api/auth", authRoutes);
 
-app.use('/api/auth', authRoutes);
+app.use("/api/rates", ratesRoutes);
 
 app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        error: 'Endpoint nie znaleziony',
-        path: req.path
-    });
+  res.status(404).json({
+    success: false,
+    error: "Endpoint nie znaleziony",
+    path: req.path,
+  });
 });
 
 app.use((err, req, res, next) => {
-    console.error('Błąd:', err.stack);
-    res.status(500).json({
-        success: false,
-        error: 'internal server error'
-    });
+  console.error("Błąd:", err.stack);
+  res.status(500).json({
+    success: false,
+    error: "Wewnętrzny błąd serwera",
+  });
 });
 
 app.listen(PORT, () => {
-    console.log(`Serwer działa na http://localhost:${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/api/health`);
-    console.log(`Auth test: http://localhost:${PORT}/api/auth/test`);
+  console.log(`Serwer działa na http://localhost:${PORT}`);
+  console.log(`Auth: http://localhost:${PORT}/api/auth`);
+  console.log(`Rates: http://localhost:${PORT}/api/rates/current`);
 });
