@@ -4,6 +4,8 @@ import db from "./config/db.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import ratesRoutes from "./routes/rates.routes.js";
+import walletRoutes from "./routes/wallet.routes.js";
+import transactionRoutes from "./routes/transaction.routes.js";
 
 dotenv.config();
 
@@ -20,6 +22,8 @@ app.get("/", (req, res) => {
     endpoints: {
       auth: "/api/auth",
       rates: "/api/rates",
+      wallet: "/api/wallet",
+      transactions: "/api/transactions",
     },
   });
 });
@@ -46,6 +50,10 @@ app.use("/api/auth", authRoutes);
 
 app.use("/api/rates", ratesRoutes);
 
+app.use("/api/wallet", walletRoutes);
+
+app.use("/api/transactions", transactionRoutes);
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -66,4 +74,8 @@ app.listen(PORT, () => {
   console.log(`Serwer działa na http://localhost:${PORT}`);
   console.log(`Auth: http://localhost:${PORT}/api/auth`);
   console.log(`Rates: http://localhost:${PORT}/api/rates/current`);
+  console.log(`Wallet: http://localhost:${PORT}/api/wallet/balance`);
+  console.log(
+    `Transactions: http://localhost:${PORT}/api/transactions/history`
+  );
 });
