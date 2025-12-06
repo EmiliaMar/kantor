@@ -1,19 +1,25 @@
 // splash screen with auto redirect
-import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
+import { useEffect } from "react";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+import { useAuth } from "../context/AuthContext";
 
 export default function Index() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    console.log(
+      "Index: loading=",
+      loading,
+      "isAuthenticated =",
+      isAuthenticated
+    );
     if (!loading) {
       if (isAuthenticated) {
-        router.replace('/(tabs)');
+        router.replace("/(tabs)");
       } else {
-        router.replace('/(auth)/login');
+        router.replace("/(auth)/login");
       }
     }
   }, [loading, isAuthenticated]);
@@ -28,8 +34,8 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
 });

@@ -73,7 +73,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Serwer działa na http://localhost:${PORT}`);
   console.log(`Auth: http://localhost:${PORT}/api/auth`);
   console.log(`Rates: http://localhost:${PORT}/api/rates/current`);
