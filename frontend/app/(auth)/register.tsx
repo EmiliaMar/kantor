@@ -1,292 +1,332 @@
-// register screen
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   ScrollView,
-} from "react-native";
-import { useAuth } from "../../context/AuthContext";
-import { useRouter } from "expo-router";
+  StatusBar,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
+import { theme } from '../../constants/theme';
 
 export default function RegisterScreen() {
-  const { register, loading } = useAuth();
   const router = useRouter();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const { register } = useAuth();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
+    firstName: false,
+    lastName: false,
+    email: false,
+    password: false,
   });
 
-  // validation
-  const validate = () => {
-    let valid = true;
-    const newErrors = {
-      email: "",
-      password: "",
-      firstName: "",
-      lastName: "",
-    };
-
-    if (!email) {
-      newErrors.email = "Email jest wymagany";
-      valid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Nieprawidłowy format email";
-      valid = false;
-    }
-
-    if (!password) {
-      newErrors.password = "Hasło jest wymagane";
-      valid = false;
-    } else if (password.length < 8) {
-      newErrors.password = "Hasło musi mieć min. 8 znaków";
-      valid = false;
-    } else if (!/[A-Z]/.test(password)) {
-      newErrors.password = "Hasło musi zawierać wielką literę";
-      valid = false;
-    } else if (!/[0-9]/.test(password)) {
-      newErrors.password = "Hasło musi zawierać cyfrę";
-      valid = false;
-    }
-
-    if (!firstName) {
-      newErrors.firstName = "Imię jest wymagane";
-      valid = false;
-    }
-
-    if (!lastName) {
-      newErrors.lastName = "Nazwisko jest wymagane";
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
-  // handle register
+  const isStrongPassword = (password: string) => {
+    if (password.length < 8) return false;
+    if (!/[A-Z]/.test(password)) return false;
+    if (!/[0-9]/.test(password)) return false;
+    return true;
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      firstName: firstName.trim() === '',
+      lastName: lastName.trim() === '',
+      email: !isValidEmail(email) || email.trim() === '',
+      password: !isStrongPassword(password),
+    };
+
+    setErrors(newErrors);
+
+    const hasErrors = Object.values(newErrors).some(error => error === true);
+    return !hasErrors;
+  };
+
   const handleRegister = async () => {
-    if (!validate()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     try {
-      await register(email, password, firstName, lastName);
-      // auto-login and redirect handled by AuthContext
-      router.replace("/(tabs)");
-    } catch (error: any) {
-      const errorMessage = error.errors
-        ? error.errors.join("\n")
-        : error.error || error.message || "Błąd rejestracji";
-
-      Alert.alert("Błąd rejestracji", errorMessage);
+      setLoading(true);
+      await register(firstName, lastName, email, password);
+      router.replace('/(tabs)');
+    } catch {
+      setErrors({
+        firstName: false,
+        lastName: false,
+        email: true,
+        password: false,
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const togglePassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const goToLogin = () => {
+    router.push('/(auth)/login');
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          {/* header */}
-          <Text style={styles.title}>Kantor</Text>
-          <Text style={styles.subtitle}>Utwórz nowe konto</Text>
-
-          {/* first name input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Imię</Text>
-            <TextInput
-              style={[
-                styles.input,
-                errors.firstName ? styles.inputError : null,
-              ]}
-              placeholder="Jan"
-              value={firstName}
-              onChangeText={(text) => {
-                setFirstName(text);
-                setErrors({ ...errors, firstName: "" });
-              }}
-              autoCapitalize="words"
-            />
-            {errors.firstName ? (
-              <Text style={styles.errorText}>{errors.firstName}</Text>
-            ) : null}
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.logoContainer}>
+            <LinearGradient
+              colors={[theme.colors.primary, theme.colors.secondary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.logoGradient}
+            >
+              <Ionicons name="swap-horizontal" size={48} color="#fff" />
+            </LinearGradient>
           </View>
 
-          {/* last name input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nazwisko</Text>
-            <TextInput
-              style={[styles.input, errors.lastName ? styles.inputError : null]}
-              placeholder="Kowalski"
-              value={lastName}
-              onChangeText={(text) => {
-                setLastName(text);
-                setErrors({ ...errors, lastName: "" });
-              }}
-              autoCapitalize="words"
-            />
-            {errors.lastName ? (
-              <Text style={styles.errorText}>{errors.lastName}</Text>
-            ) : null}
-          </View>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Sign up to get started</Text>
 
-          {/* email input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={[styles.input, errors.email ? styles.inputError : null]}
-              placeholder="email@example.com"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                setErrors({ ...errors, email: "" });
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {errors.email ? (
-              <Text style={styles.errorText}>{errors.email}</Text>
-            ) : null}
-          </View>
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>First Name</Text>
+              <View style={[styles.inputWrapper, errors.firstName && styles.inputError]}>
+                <Ionicons name="person-outline" size={20} color={theme.colors.text.secondary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="John"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
+                />
+              </View>
+              {errors.firstName && (
+                <Text style={styles.errorText}>First name is required</Text>
+              )}
+            </View>
 
-          {/* password input */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Hasło</Text>
-            <TextInput
-              style={[styles.input, errors.password ? styles.inputError : null]}
-              placeholder="min. 8 znaków, wielka litera, cyfra"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                setErrors({ ...errors, password: "" });
-              }}
-              secureTextEntry
-            />
-            {errors.password ? (
-              <Text style={styles.errorText}>{errors.password}</Text>
-            ) : null}
-          </View>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Last Name</Text>
+              <View style={[styles.inputWrapper, errors.lastName && styles.inputError]}>
+                <Ionicons name="person-outline" size={20} color={theme.colors.text.secondary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Doe"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                  value={lastName}
+                  onChangeText={setLastName}
+                  autoCapitalize="words"
+                />
+              </View>
+              {errors.lastName && (
+                <Text style={styles.errorText}>Last name is required</Text>
+              )}
+            </View>
 
-          {/* register button */}
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Zarejestruj się</Text>
-            )}
-          </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <View style={[styles.inputWrapper, errors.email && styles.inputError]}>
+                <Ionicons name="mail-outline" size={20} color={theme.colors.text.secondary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="your@email.com"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+              {errors.email && (
+                <Text style={styles.errorText}>Please enter a valid email</Text>
+              )}
+            </View>
 
-          {/* login link */}
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Masz już konto? </Text>
-            <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-              <Text style={styles.loginLink}>Zaloguj się</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={[styles.inputWrapper, errors.password && styles.inputError]}>
+                <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text.secondary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity onPress={togglePassword}>
+                  <Ionicons
+                    name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                    size={20}
+                    color={theme.colors.text.secondary}
+                  />
+                </TouchableOpacity>
+              </View>
+              <Text style={[styles.hint, errors.password && styles.errorText]}>
+                Min. 8 characters, uppercase letter and number
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              <LinearGradient
+                colors={[theme.colors.primary, theme.colors.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.registerButtonGradient}
+              >
+                <Text style={styles.registerButtonText}>
+                  {loading ? 'Creating account...' : 'Sign Up'}
+                </Text>
+              </LinearGradient>
             </TouchableOpacity>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <TouchableOpacity onPress={goToLogin}>
+                <Text style={styles.footerLink}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: theme.colors.background,
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    padding: theme.spacing.xl,
+    paddingTop: 60,
   },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  logoGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.lg,
   },
   title: {
-    fontSize: 36,
-    fontWeight: "bold",
-    textAlign: "center",
+    ...theme.typography.largeTitle,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
     marginBottom: 8,
-    color: "#1a1a1a",
   },
   subtitle: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 32,
-    color: "#666",
+    ...theme.typography.callout,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  form: {
+    gap: theme.spacing.md,
   },
   inputContainer: {
-    marginBottom: 20,
+    gap: theme.spacing.sm,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#333",
+    ...theme.typography.subheadline,
+    color: theme.colors.text.secondary,
+    fontWeight: '600',
   },
-  input: {
-    backgroundColor: "#fff",
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderColor: theme.colors.border,
+    gap: theme.spacing.sm,
   },
   inputError: {
-    borderColor: "#e74c3c",
+    borderColor: theme.colors.danger,
+    borderWidth: 2,
+  },
+  input: {
+    ...theme.typography.callout,
+    color: theme.colors.text.primary,
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+  },
+  hint: {
+    ...theme.typography.caption,
+    color: theme.colors.text.tertiary,
   },
   errorText: {
-    color: "#e74c3c",
-    fontSize: 12,
-    marginTop: 4,
+    ...theme.typography.caption,
+    color: theme.colors.danger,
   },
-  button: {
-    backgroundColor: "#3498db",
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 8,
+  registerButton: {
+    borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
+    marginTop: theme.spacing.md,
   },
-  buttonDisabled: {
-    opacity: 0.6,
+  registerButtonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+  registerButtonText: {
+    ...theme.typography.headline,
+    color: '#fff',
   },
-  loginContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
   },
-  loginText: {
-    color: "#666",
-    fontSize: 14,
+  footerText: {
+    ...theme.typography.callout,
+    color: theme.colors.text.secondary,
   },
-  loginLink: {
-    color: "#3498db",
-    fontSize: 14,
-    fontWeight: "600",
+  footerLink: {
+    ...theme.typography.callout,
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
 });

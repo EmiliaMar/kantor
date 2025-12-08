@@ -1,5 +1,4 @@
-// login screen
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,206 +8,240 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-} from "react-native";
-import { useAuth } from "../../context/AuthContext";
-import { useRouter } from "expo-router";
+  ScrollView,
+  StatusBar,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
+import { theme } from '../../constants/theme';
 
 export default function LoginScreen() {
-  const { login, loading } = useAuth();
   const router = useRouter();
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({ email: "", password: "" });
-
-  // validation
-  const validate = () => {
-    let valid = true;
-    const newErrors = { email: "", password: "" };
-
-    if (!email) {
-      newErrors.email = "Email jest wymagany";
-      valid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Nieprawidłowy format email";
-      valid = false;
-    }
-
-    if (!password) {
-      newErrors.password = "Hasło jest wymagane";
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
-  };
-
-  // handle login
   const handleLogin = async () => {
-    if (!validate()) return;
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      Alert.alert('Error', 'Please enter a valid email');
+      return;
+    }
 
     try {
+      setLoading(true);
       await login(email, password);
-      // redirect handled by index.tsx
-      router.replace("/(tabs)");
-    } catch (error: any) {
-      Alert.alert(
-        "Błąd logowania",
-        error.error || error.message || "Nieprawidłowy email lub hasło"
-      );
+      router.replace('/(tabs)');
+    } catch (err) {
+      const error = err as { error?: string };
+      Alert.alert('Error', error.error || 'Login failed');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const togglePassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const goToRegister = () => {
+    router.push('/(auth)/register');
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        {/* header */}
-        <Text style={styles.title}>Kantor</Text>
-        <Text style={styles.subtitle}>Zaloguj się do swojego konta</Text>
-
-        {/* email input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={[styles.input, errors.email ? styles.inputError : null]}
-            placeholder="email@example.com"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              setErrors({ ...errors, email: "" });
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {errors.email ? (
-            <Text style={styles.errorText}>{errors.email}</Text>
-          ) : null}
-        </View>
-
-        {/* password input */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Hasło</Text>
-          <TextInput
-            style={[styles.input, errors.password ? styles.inputError : null]}
-            placeholder="••••••••"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              setErrors({ ...errors, password: "" });
-            }}
-            secureTextEntry
-          />
-          {errors.password ? (
-            <Text style={styles.errorText}>{errors.password}</Text>
-          ) : null}
-        </View>
-
-        {/* login button */}
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Zaloguj się</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.logoContainer}>
+            <LinearGradient
+              colors={[theme.colors.primary, theme.colors.secondary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.logoGradient}
+            >
+              <Ionicons name="swap-horizontal" size={48} color="#fff" />
+            </LinearGradient>
+          </View>
 
-        {/* register link */}
-        <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>Nie masz konta? </Text>
-          <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
-            <Text style={styles.registerLink}>Zarejestruj się</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to continue</Text>
+
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={20} color={theme.colors.text.secondary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="your@email.com"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text.secondary} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity onPress={togglePassword}>
+                  <Ionicons
+                    name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                    size={20}
+                    color={theme.colors.text.secondary}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <LinearGradient
+                colors={[theme.colors.primary, theme.colors.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.loginButtonGradient}
+              >
+                <Text style={styles.loginButtonText}>
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Dont have an account? </Text>
+              <TouchableOpacity onPress={goToRegister}>
+                <Text style={styles.footerLink}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: theme.colors.background,
   },
-  content: {
+  keyboardView: {
     flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: theme.spacing.xl,
+    paddingTop: 80,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  logoGradient: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.lg,
   },
   title: {
-    fontSize: 36,
-    fontWeight: "bold",
-    textAlign: "center",
+    ...theme.typography.largeTitle,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
     marginBottom: 8,
-    color: "#1a1a1a",
   },
   subtitle: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 32,
-    color: "#666",
+    ...theme.typography.callout,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  form: {
+    gap: theme.spacing.lg,
   },
   inputContainer: {
-    marginBottom: 20,
+    gap: theme.spacing.sm,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#333",
+    ...theme.typography.subheadline,
+    color: theme.colors.text.secondary,
+    fontWeight: '600',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    gap: theme.spacing.sm,
   },
   input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    ...theme.typography.callout,
+    color: theme.colors.text.primary,
+    flex: 1,
+    paddingVertical: theme.spacing.md,
   },
-  inputError: {
-    borderColor: "#e74c3c",
+  loginButton: {
+    borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
+    marginTop: theme.spacing.md,
   },
-  errorText: {
-    color: "#e74c3c",
-    fontSize: 12,
-    marginTop: 4,
+  loginButtonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
   },
-  button: {
-    backgroundColor: "#3498db",
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 8,
+  loginButtonText: {
+    ...theme.typography.headline,
+    color: '#fff',
   },
-  buttonDisabled: {
-    opacity: 0.6,
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: theme.spacing.md,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+  footerText: {
+    ...theme.typography.callout,
+    color: theme.colors.text.secondary,
   },
-  registerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
-  },
-  registerText: {
-    color: "#666",
-    fontSize: 14,
-  },
-  registerLink: {
-    color: "#3498db",
-    fontSize: 14,
-    fontWeight: "600",
+  footerLink: {
+    ...theme.typography.callout,
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
 });
