@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,39 +10,39 @@ import {
   Platform,
   ScrollView,
   StatusBar,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../context/AuthContext';
-import { theme } from '../../constants/theme';
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../context/AuthContext";
+import { theme } from "../../constants/theme";
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill all fields');
+      Alert.alert("Error", "Please fill all fields");
       return;
     }
 
-    if (!email.includes('@')) {
-      Alert.alert('Error', 'Please enter a valid email');
+    if (!email.includes("@")) {
+      Alert.alert("Error", "Please enter a valid email");
       return;
     }
 
     try {
       setLoading(true);
       await login(email, password);
-      router.replace('/(tabs)');
+      router.replace("/(tabs)");
     } catch (err) {
       const error = err as { error?: string };
-      Alert.alert('Error', error.error || 'Login failed');
+      Alert.alert("Error", error.error || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -53,14 +53,14 @@ export default function LoginScreen() {
   };
 
   const goToRegister = () => {
-    router.push('/(auth)/register');
+    router.push("/(auth)/register");
   };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <ScrollView
@@ -85,7 +85,11 @@ export default function LoginScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={20} color={theme.colors.text.secondary} />
+                <Ionicons
+                  name="mail-outline"
+                  size={20}
+                  color={theme.colors.text.secondary}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="your@email.com"
@@ -102,7 +106,11 @@ export default function LoginScreen() {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text.secondary} />
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color={theme.colors.text.secondary}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="••••••••"
@@ -114,7 +122,7 @@ export default function LoginScreen() {
                 />
                 <TouchableOpacity onPress={togglePassword}>
                   <Ionicons
-                    name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                    name={showPassword ? "eye-outline" : "eye-off-outline"}
                     size={20}
                     color={theme.colors.text.secondary}
                   />
@@ -134,7 +142,7 @@ export default function LoginScreen() {
                 style={styles.loginButtonGradient}
               >
                 <Text style={styles.loginButtonText}>
-                  {loading ? 'Signing in...' : 'Sign In'}
+                  {loading ? "Signing in..." : "Sign In"}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -166,27 +174,27 @@ const styles = StyleSheet.create({
     paddingTop: 80,
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: theme.spacing.xl,
   },
   logoGradient: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     ...theme.shadows.lg,
   },
   title: {
     ...theme.typography.largeTitle,
     color: theme.colors.text.primary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     ...theme.typography.callout,
     color: theme.colors.text.secondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: theme.spacing.xl,
   },
   form: {
@@ -198,11 +206,11 @@ const styles = StyleSheet.create({
   label: {
     ...theme.typography.subheadline,
     color: theme.colors.text.secondary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
@@ -218,21 +226,21 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     borderRadius: theme.borderRadius.md,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginTop: theme.spacing.md,
   },
   loginButtonGradient: {
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loginButtonText: {
     ...theme.typography.headline,
-    color: '#fff',
+    color: "#fff",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: theme.spacing.md,
   },
   footerText: {
@@ -242,6 +250,6 @@ const styles = StyleSheet.create({
   footerLink: {
     ...theme.typography.callout,
     color: theme.colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
