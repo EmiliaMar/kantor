@@ -1,110 +1,108 @@
-// dashboard screen - exchange rates
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   RefreshControl,
-  TouchableOpacity,
   ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { useAuth } from '../../context/AuthContext';
-import { useRouter } from 'expo-router';
-import { getCurrentRates, ExchangeRate } from '../../services/ratesService';
-import CurrencyCard from '../../components/CurrencyCard';
+  StatusBar,
+  Image,
+} from "react-native";
+import { getCurrentRates, ExchangeRate } from "../../services/ratesService";
+import { useAuth } from "../../context/AuthContext";
+import GlassCard from "../../components/GlassCard";
+import { theme } from "../../constants/theme";
+import { currencyFlags } from "../../constants/flags";
 
-export default function HomeScreen() {
-  const { logout, user } = useAuth();
-  const router = useRouter();
-
+export default function DashboardScreen() {
+  const { user } = useAuth();
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // fetch rates on mount
   useEffect(() => {
     fetchRates();
   }, []);
 
-  // fetch rates from API
   const fetchRates = async () => {
     try {
-      setLoading(true);
       const data = await getCurrentRates();
       setRates(data);
-    } catch (error: any) {
-      Alert.alert('Błąd', 'Nie udało się pobrać kursów walut');
-      console.error(error);
+    } catch (error) {
+      console.error("error fetching rates:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // pull to refresh
-  const onRefresh = async () => {
-    try {
-      setRefreshing(true);
-      const data = await getCurrentRates();
-      setRates(data);
-    } catch (error: any) {
-      Alert.alert('Błąd', 'Nie udało się odświeżyć kursów');
-    } finally {
       setRefreshing(false);
     }
   };
 
-  // handle logout
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/(auth)/login');
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchRates();
   };
 
-  // loading state
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#3498db" />
-        <Text style={styles.loadingText}>Ładowanie kursów...</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Witaj, {user?.firstName}!</Text>
-          <Text style={styles.subtitle}>Aktualne kursy walut</Text>
-        </View>
-        <TouchableOpacity 
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
-          <Text style={styles.logoutText}>Wyloguj</Text>
-        </TouchableOpacity>
-      </View>
+      <StatusBar barStyle="dark-content" />
 
-      {/* rates list */}
+      <View style={styles.header}></View>
+
       <FlatList
         data={rates}
         keyExtractor={(item) => item.currencyCode}
-        renderItem={({ item }) => <CurrencyCard rate={item} />}
+        renderItem={({ item }) => (
+          <GlassCard style={styles.rateCard}>
+            <View style={styles.rateRow}>
+              <View style={styles.currencySection}>
+                <Image
+                  source={{ uri: currencyFlags[item.currencyCode] }}
+                  style={styles.flagImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.currencyText}>
+                  <Text style={styles.currencyCode}>{item.currencyCode}</Text>
+                  <Text style={styles.currencyName}>{item.currencyName}</Text>
+                </View>
+              </View>
+
+              <View style={styles.rateBox}>
+                <Text style={styles.rateLabel}>Buy</Text>
+                <Text
+                  style={[styles.rateValue, { color: theme.colors.success }]}
+                >
+                  {item.buyRate.toFixed(4)}
+                </Text>
+              </View>
+
+              <View style={styles.rateBox}>
+                <Text style={styles.rateLabel}>Sell</Text>
+                <Text
+                  style={[styles.rateValue, { color: theme.colors.danger }]}
+                >
+                  {item.sellRate.toFixed(4)}
+                </Text>
+              </View>
+            </View>
+          </GlassCard>
+        )}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#3498db']}
+            tintColor={theme.colors.primary}
           />
         }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Brak kursów walut</Text>
-          </View>
-        }
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -113,62 +111,83 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.background,
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-  },
-  loadingText: {
-    marginTop: 12,
-    color: '#666',
-    fontSize: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: theme.colors.background,
   },
   header: {
-    backgroundColor: '#fff',
-    padding: 20,
-    paddingTop: 60,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingTop: 10,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
+    ...theme.typography.largeTitle,
+    color: theme.colors.text.primary,
+    marginBottom: 4,
+  },
+  currencySection: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  flagImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: theme.spacing.md,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  logoutButton: {
-    backgroundColor: '#e74c3c',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  logoutText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
+    ...theme.typography.subheadline,
+    color: theme.colors.text.secondary,
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
   },
-  emptyContainer: {
-    padding: 40,
-    alignItems: 'center',
+  rateCard: {
+    marginBottom: theme.spacing.md,
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#999',
+
+  currencyIcon: {
+    fontSize: 24,
+    color: theme.colors.primary,
+  },
+  currencyCode: {
+    ...theme.typography.headline,
+    color: theme.colors.text.primary,
+    fontWeight: "600",
+  },
+  currencyName: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    marginTop: 2,
+  },
+
+  rateLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
+    marginBottom: 2,
+  },
+
+  rateValue: {
+    ...theme.typography.callout,
+    fontWeight: "700",
+  },
+
+  rateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  currencyText: {
+    flex: 1,
+  },
+  rateBox: {
+    alignItems: "center",
+    minWidth: 70,
   },
 });
