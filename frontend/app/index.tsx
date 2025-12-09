@@ -1,5 +1,4 @@
-// splash screen with auto redirect
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
@@ -7,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 export default function Index() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
     console.log(
@@ -15,14 +15,16 @@ export default function Index() {
       "isAuthenticated =",
       isAuthenticated
     );
-    if (!loading) {
+    
+    if (!loading && !hasRedirected.current) {
+      hasRedirected.current = true;
       if (isAuthenticated) {
         router.replace("/(tabs)");
       } else {
-        router.replace("/(auth)/login");
+        router.replace("/public-rates");
       }
     }
-  }, [loading, isAuthenticated]);
+  }, [loading]);
 
   return (
     <View style={styles.container}>

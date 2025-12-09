@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -24,25 +23,47 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({
+    email: false,
+    password: false,
+  });
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      email: !isValidEmail(email) || email.trim() === "",
+      password: password.trim() === "",
+    };
+
+    setErrors(newErrors);
+    setErrorMessage("");
+
+    const hasErrors = Object.values(newErrors).some((error) => error === true);
+    return !hasErrors;
+  };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please fill all fields");
-      return;
-    }
-
-    if (!email.includes("@")) {
-      Alert.alert("Error", "Please enter a valid email");
+    if (!validateForm()) {
       return;
     }
 
     try {
       setLoading(true);
+      setErrorMessage("");
       await login(email, password);
       router.replace("/(tabs)");
     } catch (err) {
       const error = err as { error?: string };
-      Alert.alert("Error", error.error || "Login failed");
+      setErrors({
+        email: true,
+        password: true,
+      });
+      setErrorMessage(error.error || "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -84,7 +105,9 @@ export default function LoginScreen() {
           <View style={styles.form}>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
-              <View style={styles.inputWrapper}>
+              <View
+                style={[styles.inputWrapper, errors.email && styles.inputError]}
+              >
                 <Ionicons
                   name="mail-outline"
                   size={20}
@@ -101,11 +124,19 @@ export default function LoginScreen() {
                   autoCorrect={false}
                 />
               </View>
+              {errors.email && !errorMessage && (
+                <Text style={styles.errorText}>Please enter a valid email</Text>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrapper}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  errors.password && styles.inputError,
+                ]}
+              >
                 <Ionicons
                   name="lock-closed-outline"
                   size={20}
@@ -128,7 +159,16 @@ export default function LoginScreen() {
                   />
                 </TouchableOpacity>
               </View>
+              {errors.password && !errorMessage && (
+                <Text style={styles.errorText}>Password is required</Text>
+              )}
             </View>
+
+            {errorMessage && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorMessageText}>{errorMessage}</Text>
+              </View>
+            )}
 
             <TouchableOpacity
               style={styles.loginButton}
@@ -218,11 +258,31 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     gap: theme.spacing.sm,
   },
+  inputError: {
+    borderColor: theme.colors.danger,
+    borderWidth: 2,
+  },
   input: {
     ...theme.typography.callout,
     color: theme.colors.text.primary,
     flex: 1,
     paddingVertical: theme.spacing.md,
+  },
+  errorText: {
+    ...theme.typography.caption,
+    color: theme.colors.danger,
+  },
+  errorContainer: {
+    backgroundColor: theme.colors.danger + "15",
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.danger,
+  },
+  errorMessageText: {
+    ...theme.typography.callout,
+    color: theme.colors.danger,
+    textAlign: "center",
   },
   loginButton: {
     borderRadius: theme.borderRadius.md,
