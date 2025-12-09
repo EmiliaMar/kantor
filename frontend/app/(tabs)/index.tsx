@@ -64,7 +64,7 @@ export default function DashboardScreen() {
             <View style={styles.rateRow}>
               <View style={styles.currencySection}>
                 <Image
-                  source={{ uri: currencyFlags[item.currencyCode] }}
+                  source={currencyFlags[item.currencyCode]}
                   style={styles.flagImage}
                   resizeMode="cover"
                 />

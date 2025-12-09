@@ -82,7 +82,7 @@ export default function WalletScreen() {
         <View style={styles.walletInfo}>
           <View style={styles.currencyCircle}>
             <Image
-              source={{ uri: currencyFlags[item.currency] }}
+              source={currencyFlags[item.currency]}
               style={styles.flagImage}
               resizeMode="cover"
             />

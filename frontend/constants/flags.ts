@@ -1,8 +1,7 @@
-// currency flags from CDN
-export const currencyFlags: { [key: string]: string } = {
-  EUR: 'https://flagcdn.com/w160/eu.png',
-  USD: 'https://flagcdn.com/w160/us.png',
-  GBP: 'https://flagcdn.com/w160/gb.png',
-  CHF: 'https://flagcdn.com/w160/ch.png',
-  PLN: 'https://flagcdn.com/w160/pl.png',
+export const currencyFlags: { [key: string]: any } = {
+  EUR: require('../assets/flags/eu.png'),
+  USD: require('../assets/flags/us.png'),
+  GBP: require('../assets/flags/gb.png'),
+  CHF: require('../assets/flags/ch.png'),
+  PLN: require('../assets/flags/pl.png'),
 };
